@@ -62,12 +62,10 @@ def eval_policy(ddpg, eval_episodes=10):
 ###############################  DDPG  ####################################
 class DDPG(object):
     def __init__(self, a_dim, s_dim, a_bound):
-        self.memory = np.zeros((MEMORY_CAPACITY, s_dim * 2 + a_dim + 1), dtype=np.float32)  # memory里存放当前和下一个state，动作和奖励
         self.pointer = 0
         self.sess = tf.Session()
 
         self.a_dim, self.s_dim, self.a_bound = a_dim, s_dim, a_bound,
-        self.S = tf.placeholder(tf.float32, [None, s_dim], 's')  # 输入
         self.S_ = tf.placeholder(tf.float32, [None, s_dim], 's_')
         self.R = tf.placeholder(tf.float32, [None, 1], 'r')
 
@@ -172,7 +170,6 @@ for i in range(MAX_EPISODES):
     while j < MAX_EP_STEPS:
         # Add exploration noise
         a = ddpg.choose_action(s_normal.state_normal(s))
-        a = np.clip(np.random.normal(a, var), *a_bound)  # 高斯噪声add randomness to action selection for exploration
         s_, r, is_terminal, step_redo, offloading_ratio_change, reset_dist = env.step(a)
         if step_redo:
             continue

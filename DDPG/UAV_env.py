@@ -5,45 +5,45 @@ import numpy as np
 
 
 class UAVEnv(object):
-    height = ground_length = ground_width = 100  # 场地长宽均为100m，UAV飞行高度也是
-    sum_task_size = 100 * 1048576  # 总计算任务60 Mbits --> 60 80 100 120 140
+    height = ground_length = ground_width = 100  # The length and width of the site are both 100m，UAV flight altitude is also
+    sum_task_size = 100 * 1048576  # Total computing tasks 60 Mbits --> 60 80 100 120 140
     loc_uav = [50, 50]
     bandwidth_nums = 1
-    B = bandwidth_nums * 10 ** 6  # 带宽1MHz
-    p_noisy_los = 10 ** (-13)  # 噪声功率-100dBm
-    p_noisy_nlos = 10 ** (-11)  # 噪声功率-80dBm
-    flight_speed = 50.  # 飞行速度50m/s
-    # f_ue = 6e8  # UE的计算频率0.6GHz
-    f_ue = 2e8  # UE的计算频率0.6GHz
-    f_uav = 1.2e9  # UAV的计算频率1.2GHz
-    r = 10 ** (-27)  # 芯片结构对cpu处理的影响因子
-    s = 1000  # 单位bit处理所需cpu圈数1000
-    p_uplink = 0.1  # 上行链路传输功率0.1W
-    alpha0 = 1e-5  # 距离为1m时的参考信道增益-30dB = 0.001， -50dB = 1e-5
-    T = 320  # 周期320s
+    B = bandwidth_nums * 10 ** 6  # Bandwidth 1MHz
+    p_noisy_los = 10 ** (-13)  # Noise power -100dBm
+    p_noisy_nlos = 10 ** (-11)  # Noise power -80dBm
+    flight_speed = 50.  # Flight speed 50m/s
+    # f_ue = 6e8  # The calculation frequency of UE is 0.6GHz
+    f_ue = 2e8  # The calculation frequency of UE is 0.6GHz
+    f_uav = 1.2e9  #The calculation frequency of UAV is 1.2GHz
+    r = 10 ** (-27)  # Influence factor of chip structure on cpu processing
+    s = 1000  # The number of cpu turns required for unit bit processing is 1000
+    p_uplink = 0.1  # Uplink transmission power 0.1W
+    alpha0 = 1e-5  # Reference channel gain at a distance of 1m -30dB = 0.001, -50dB = 1e-5
+    T = 320  # Cycle 320s
     t_fly = 1
     t_com = 7
-    delta_t = t_fly + t_com  # 1s飞行, 后7s用于悬停计算
-    v_ue = 1    # ue移动速度1m/s
-    slot_num = int(T / delta_t)  # 40个间隔
-    m_uav = 9.65  # uav质量/kg
-    e_battery_uav = 500000  # uav电池电量: 500kJ. ref: Mobile Edge Computing via a UAV-Mounted Cloudlet: Optimization of Bit Allocation and Path Planning
+    delta_t = t_fly + t_com  # 1s flight, the last 7s is used for hover calculation
+    v_ue = 1    # ue moving speed 1m/s
+    slot_num = int(T / delta_t)  # 40 intervals
+    m_uav = 9.65  # uav mass/kg
+    e_battery_uav = 500000  # uav battery power: 500kJ. ref: Mobile Edge Computing via a UAV-Mounted Cloudlet: Optimization of Bit Allocation and Path Planning
 
     #################### ues ####################
-    M = 4  # UE数量
-    block_flag_list = np.random.randint(0, 2, M)  # 4个ue，ue的遮挡情况
-    loc_ue_list = np.random.randint(0, 101, size=[M, 2])  # 位置信息:x在0-100随机
-    # task_list = np.random.randint(1572864, 2097153, M)      # 随机计算任务1.5~2Mbits ->对应总任务大小60
-    task_list = np.random.randint(2097153, 2621440, M)  # 随机计算任务2~2.5Mbits -> 80
-    # ue位置转移概率
-    # 0:位置不变; 1:x+1,y; 2:x,y+1; 3:x-1,y; 4:x,y-1
+    M = 4  # Number of UEs
+    block_flag_list = np.random.randint(0, 2, M)  # 4 ue, the occlusion of ue
+    loc_ue_list = np.random.randint(0, 101, size=[M, 2])  # Position information: x is random from 0-100
+    # task_list = np.random.randint(1572864, 2097153, M)      # Random computing task 1.5~2Mbits -> corresponding total task size 60
+    task_list = np.random.randint(2097153, 2621440, M)  # Random calculation task 2~2.5Mbits -> 80
+    # ue position transition probability
+    # 0: the position remains unchanged; 1:x+1,y; 2:x,y+1; 3:x-1,y; 4:x,y-1
     # loc_ue_trans_pro = np.array([[.6, .1, .1, .1, .1],
     #                              [.6, .1, .1, .1, .1],
     #                              [.6, .1, .1, .1, .1],
     #                              [.6, .1, .1, .1, .1]])
 
-    action_bound = [-1, 1]  # 对应tahn激活函数
-    action_dim = 4  # 第一位表示服务的ue id;中间两位表示飞行角度和距离；后1位表示目前服务于UE的卸载率
+    action_bound = [-1, 1]  # Corresponding tahn activation function
+    action_dim = 4  # The first digit represents the ue id of the service; the middle two digits represent the flight angle and distance; the last digit represents the unloading rate currently serving the UE
     state_dim = 4 + M * 4  # uav battery remain, uav loc, remaining sum task size, all ue loc, all ue task size, all ue block_flag
 
     def __init__(self):
@@ -56,20 +56,20 @@ class UAVEnv(object):
         self.state = self.start_state
 
     def reset_env(self):
-        self.sum_task_size = 100 * 1048576  # 总计算任务60 Mbits -> 60 80 100 120 140
-        self.e_battery_uav = 500000  # uav电池电量: 500kJ
+        self.sum_task_size = 100 * 1048576  # Total computing tasks 60 Mbits -> 60 80 100 120 140
+        self.e_battery_uav = 500000  # uav battery power: 500kJ
         self.loc_uav = [50, 50]
-        self.loc_ue_list = np.random.randint(0, 101, size=[self.M, 2])  # 位置信息:x在0-100随机
+        self.loc_ue_list = np.random.randint(0, 101, size=[self.M, 2])  # Position information: x is random from 0-100
         self.reset_step()
 
     def reset_step(self):
-        # self.task_list = np.random.randint(1572864, 2097153, self.M)  # 随机计算任务1.5~2Mbits -> 1.5~2 2~2.5 2.5~3 3~3.5 3.5~4
-        # self.task_list = np.random.randint(2097152, 2621441, self.M)  # 随机计算任务1.5~2Mbits -> 1.5~2 2~2.5 2.5~3 3~3.5 3.5~4
-        # self.task_list = np.random.randint(2621440, 3145729, self.M)  # 随机计算任务1.5~2Mbits -> 1.5~2 2~2.5 2.5~3 3~3.5 3.5~4
-        self.task_list = np.random.randint(2621440, 3145729, self.M)  # 随机计算任务1.5~2Mbits -> 1.5~2 2~2.5 2.5~3 3~3.5 3.5~4
-        # self.task_list = np.random.randint(3145728, 3670017, self.M)  # 随机计算任务1.5~2Mbits -> 1.5~2 2~2.5 2.5~3 3~3.5 3.5~4
-        # self.task_list = np.random.randint(3670016, 4194305, self.M)  # 随机计算任务1.5~2Mbits -> 1.5~2 2~2.5 2.5~3 3~3.5 3.5~4
-        self.block_flag_list = np.random.randint(0, 2, self.M)  # 4个ue，ue的遮挡情况
+        # self.task_list = np.random.randint(1572864, 2097153, self.M)  # Random computing task 1.5~2Mbits -> 1.5~2 2~2.5 2.5~3 3~3.5 3.5~4
+        # self.task_list = np.random.randint(2097152, 2621441, self.M)  # random computing tasks 1.5~2Mbits -> 1.5~2 2~2.5 2.5~3 3~3.5 3.5~4
+        # self.task_list = np.random.randint(2621440, 3145729, self.M)  # random computing tasks 1.5~2Mbits -> 1.5~2 2~2.5 2.5~3 3~3.5 3.5~4
+        self.task_list = np.random.randint(2621440, 3145729, self.M)  # random computing tasks 1.5~2Mbits -> 1.5~2 2~2.5 2.5~3 3~3.5 3.5~4
+        # self.task_list = np.random.randint(3145728, 3670017, self.M)  # random computing tasks 1.5~2Mbits -> 1.5~2 2~2.5 2.5~3 3~3.5 3.5~4
+        # self.task_list = np.random.randint(3670016, 4194305, self.M)  # random computing tasks 1.5~2Mbits -> 1.5~2 2~2.5 2.5~3 3~3.5 3.5~4
+        self.block_flag_list = np.random.randint(0, 2, self.M)  # 4 indivual ue，The occlusion of ue
 
     def reset(self):
         self.reset_env()
@@ -90,97 +90,97 @@ class UAVEnv(object):
         self.state = np.append(self.state, self.block_flag_list)
         return self.state
 
-    def step(self, action):  # 0: 选择服务的ue编号 ; 1: 方向theta; 2: 距离d; 3: offloading ratio
+    def step(self, action):  # 0: Select the ue number of the service ; 1: direction theta; 2: distance d; 3: offloading ratio
         step_redo = False
         is_terminal = False
         offloading_ratio_change = False
         reset_dist = False
-        action = (action + 1) / 2  # 将取值区间位-1~1的action -> 0~1的action。避免原来action_bound为[0,1]时训练actor网络tanh函数一直取边界0
-        #################寻找最优的服务对象UE######################
-        # 对ddpg进行改进,输出层添加一层用来输出离散动作(实现结果不对)
-        # 采用最近距离算法, 有错误.如果最近距离无人机就一直停在头上了(错)
-        # 随机轮询:先生成一个随机数队列, 服务完就剔除UE, 队列为空再次随机生成(逻辑不对)
-        # 控制变量映射到各个变量的取值区间
+        action = (action + 1) / 2  # The value range is -1~1 action -> 0~1 action. Avoid training the actor network tanh function to always take the boundary 0 when the original action_bound is [0,1]
+        #################Find the best service target UE######################
+        # Improve ddpg, add a layer to the output layer to output discrete actions (the implementation result is wrong)
+        # Using the shortest distance algorithm, there is an error. If the shortest distance drone has been parked on the head (wrong)
+        # Random polling: first generate a random number queue, remove the UE after the service is completed, and generate it randomly again when the queue is empty (logic is wrong)
+        # The control variable is mapped to the value range of each variable
         if action[0] == 1:
             ue_id = self.M - 1
         else:
             ue_id = int(self.M * action[0])
 
-        theta = action[1] * np.pi * 2  # 角度
-        offloading_ratio = action[3]  # ue卸载率
+        theta = action[1] * np.pi * 2  # angle
+        offloading_ratio = action[3]  # ue uninstall rate
         task_size = self.task_list[ue_id]
         block_flag = self.block_flag_list[ue_id]
 
-        # 飞行距离
-        dis_fly = action[2] * self.flight_speed * self.t_fly  # 1s飞行距离
-        # 飞行能耗
+        # flight distance
+        dis_fly = action[2] * self.flight_speed * self.t_fly  # 1s flight distance
+        # flight energy consumption
         e_fly = (dis_fly / self.t_fly) ** 2 * self.m_uav * self.t_fly * 0.5  # ref: Mobile Edge Computing via a UAV-Mounted Cloudlet: Optimization of Bit Allocation and Path Planning
 
-        # UAV飞行后的位置
+        # UAV position after flight
         dx_uav = dis_fly * math.cos(theta)
         dy_uav = dis_fly * math.sin(theta)
         loc_uav_after_fly_x = self.loc_uav[0] + dx_uav
         loc_uav_after_fly_y = self.loc_uav[1] + dy_uav
 
-        # 服务器计算耗能
-        t_server = offloading_ratio * task_size / (self.f_uav / self.s)  # 在UAV边缘服务器上计算时延
-        e_server = self.r * self.f_uav ** 3 * t_server  # 在UAV边缘服务器上计算耗能
+        # Server Computing Power Consumption
+        t_server = offloading_ratio * task_size / (self.f_uav / self.s)  # Computing Latency on UAV Edge Server
+        e_server = self.r * self.f_uav ** 3 * t_server  # Calculate energy consumption on UAV edge server
 
-        if self.sum_task_size == 0:  # 计算任务全部完成
+        if self.sum_task_size == 0:  # Computational tasks are all completed
             is_terminal = True
             reward = 0
-        elif self.sum_task_size - self.task_list[ue_id] < 0:  # 最后一步计算任务和ue的计算任务不匹配
+        elif self.sum_task_size - self.task_list[ue_id] < 0:  # The calculation task of the last step does not match the calculation task of ue
             self.task_list = np.ones(self.M) * self.sum_task_size
             reward = 0
             step_redo = True
-        elif loc_uav_after_fly_x < 0 or loc_uav_after_fly_x > self.ground_width or loc_uav_after_fly_y < 0 or loc_uav_after_fly_y > self.ground_length:  # uav位置不对
-            # 如果超出边界，则飞行距离dist置零
+        elif loc_uav_after_fly_x < 0 or loc_uav_after_fly_x > self.ground_width or loc_uav_after_fly_y < 0 or loc_uav_after_fly_y > self.ground_length:  # The uav position is wrong
+            # If it exceeds the boundary, the flight distance dist is set to zero
             reset_dist = True
-            delay = self.com_delay(self.loc_ue_list[ue_id], self.loc_uav, offloading_ratio, task_size, block_flag)  # 计算delay
+            delay = self.com_delay(self.loc_ue_list[ue_id], self.loc_uav, offloading_ratio, task_size, block_flag)  # calculate delay
             reward = -delay
-            # 更新下一时刻状态
-            self.e_battery_uav = self.e_battery_uav - e_server  # uav 剩余电量
+            # Update the status of the next moment
+            self.e_battery_uav = self.e_battery_uav - e_server  # remaining power of uav
             self.reset2(delay, self.loc_uav[0], self.loc_uav[1], offloading_ratio, task_size, ue_id)
-        elif self.e_battery_uav < e_fly or self.e_battery_uav - e_fly < e_server:  # uav电量不能支持计算
+        elif self.e_battery_uav < e_fly or self.e_battery_uav - e_fly < e_server:  # uav power can not support calculation
             delay = self.com_delay(self.loc_ue_list[ue_id], np.array([loc_uav_after_fly_x, loc_uav_after_fly_y]),
-                                   0, task_size, block_flag)  # 计算delay
+                                   0, task_size, block_flag)  # calculate delay
             reward = -delay
             self.reset2(delay, loc_uav_after_fly_x, loc_uav_after_fly_y, 0, task_size, ue_id)
             offloading_ratio_change = True
-        else:  # 电量支持飞行,且计算任务合理,且计算任务能在剩余电量内计算
+        else:  # The power supports flight, and the calculation tasks are reasonable, and the calculation tasks can be calculated within the remaining power
             delay = self.com_delay(self.loc_ue_list[ue_id], np.array([loc_uav_after_fly_x, loc_uav_after_fly_y]),
-                                   offloading_ratio, task_size, block_flag)  # 计算delay
+                                   offloading_ratio, task_size, block_flag)  # calculate delay
             reward = -delay
-            # 更新下一时刻状态
-            self.e_battery_uav = self.e_battery_uav - e_fly - e_server  # uav 剩余电量
-            self.loc_uav[0] = loc_uav_after_fly_x  # uav 飞行后的位置
+            # Update the status of the next moment
+            self.e_battery_uav = self.e_battery_uav - e_fly - e_server  # remaining power of uav
+            self.loc_uav[0] = loc_uav_after_fly_x  # uav position after flight
             self.loc_uav[1] = loc_uav_after_fly_y
             self.reset2(delay, loc_uav_after_fly_x, loc_uav_after_fly_y, offloading_ratio, task_size,
-                                           ue_id)   # 重置ue任务大小，剩余总任务大小，ue位置，并记录到文件
+                                           ue_id)   # Reset ue task size, remaining total task size, ue position, and record to file
 
         return self._get_obs(), reward, is_terminal, step_redo, offloading_ratio_change, reset_dist
 
-    # 重置ue任务大小，剩余总任务大小，ue位置，并记录到文件
+    # Reset ue task size, remaining total task size, ue position, and record to file
     def reset2(self, delay, x, y, offloading_ratio, task_size, ue_id):
-        self.sum_task_size -= self.task_list[ue_id]  # 剩余任务量
-        for i in range(self.M):  # ue随机移动后的位置
+        self.sum_task_size -= self.task_list[ue_id]  # Remaining tasks
+        for i in range(self.M):  # The position of ue after random movement
             tmp = np.random.rand(2)
-            theta_ue = tmp[0] * np.pi * 2  # ue 随机移动角度
-            dis_ue = tmp[1] * self.delta_t * self.v_ue  # ue 随机移动距离
+            theta_ue = tmp[0] * np.pi * 2  # ue random movement angle
+            dis_ue = tmp[1] * self.delta_t * self.v_ue  # ue random movement distance
             self.loc_ue_list[i][0] = self.loc_ue_list[i][0] + math.cos(theta_ue) * dis_ue
             self.loc_ue_list[i][1] = self.loc_ue_list[i][1] + math.sin(theta_ue) * dis_ue
             self.loc_ue_list[i] = np.clip(self.loc_ue_list[i], 0, self.ground_width)
-        self.reset_step()  # ue随机计算任务1~2Mbits # 4个ue，ue的遮挡情况
-        # 记录UE花费
+        self.reset_step()  # ue random calculation task 1~2Mbits # 4 ue, the occlusion of ue
+        # Record UE spending
         file_name = 'output.txt'
         # file_name = 'output_ddpg_' + str(self.bandwidth_nums) + 'MHz.txt'
         with open(file_name, 'a') as file_obj:
             file_obj.write("\nUE-" + '{:d}'.format(ue_id) + ", task size: " + '{:d}'.format(int(task_size)) + ", offloading ratio:" + '{:.2f}'.format(offloading_ratio))
             file_obj.write("\ndelay:" + '{:.2f}'.format(delay))
-            file_obj.write("\nUAV hover loc:" + "[" + '{:.2f}'.format(x) + ', ' + '{:.2f}'.format(y) + ']')  # 输出保留两位结果
+            file_obj.write("\nUAV hover loc:" + "[" + '{:.2f}'.format(x) + ', ' + '{:.2f}'.format(y) + ']')  # Output retains two digits result
 
 
-    # 计算花费
+    # Calculate cost
     def com_delay(self, loc_ue, loc_uav, offloading_ratio, task_size, block_flag):
         dx = loc_uav[0] - loc_ue[0]
         dy = loc_uav[1] - loc_ue[1]
@@ -189,11 +189,11 @@ class UAVEnv(object):
         p_noise = self.p_noisy_los
         if block_flag == 1:
             p_noise = self.p_noisy_nlos
-        g_uav_ue = abs(self.alpha0 / dist_uav_ue ** 2)  # 信道增益
-        trans_rate = self.B * math.log2(1 + self.p_uplink * g_uav_ue / p_noise)  # 上行链路传输速率bps
-        t_tr = offloading_ratio * task_size / trans_rate  # 上传时延,1B=8bit
-        t_edge_com = offloading_ratio * task_size / (self.f_uav / self.s)  # 在UAV边缘服务器上计算时延
-        t_local_com = (1 - offloading_ratio) * task_size / (self.f_ue / self.s)  # 本地计算时延
+        g_uav_ue = abs(self.alpha0 / dist_uav_ue ** 2)  # channel gain
+        trans_rate = self.B * math.log2(1 + self.p_uplink * g_uav_ue / p_noise)  # Uplink transmission rate bps
+        t_tr = offloading_ratio * task_size / trans_rate  # Upload delay, 1B=8bit
+        t_edge_com = offloading_ratio * task_size / (self.f_uav / self.s)  # Computing Latency on UAV Edge Server
+        t_local_com = (1 - offloading_ratio) * task_size / (self.f_ue / self.s)  # Local Computing Latency
         if t_tr < 0 or t_edge_com < 0 or t_local_com < 0:
             raise Exception(print("+++++++++++++++++!! error !!+++++++++++++++++++++++"))
-        return max([t_tr + t_edge_com, t_local_com])  # 飞行时间影响因子
+        return max([t_tr + t_edge_com, t_local_com])  # time-of-flight impact factor
